@@ -17,7 +17,6 @@ change_busy_state (GSimpleAction *action, GVariant *state, gpointer user_data)
 	GtkWindow *window = user_data;
 	GApplication *application = G_APPLICATION (gtk_window_get_application (window));
 
-	/* do this twice to test multiple busy counter increases */
 	if (g_variant_get_boolean (state)) {
 		g_application_mark_busy (application);
 	} else {
@@ -32,36 +31,15 @@ static GActionEntry win_entries[] = {
 };
 
 static void
-new_window (GApplication *app)
+bloat_pad_activate (GApplication *app)
 {
-	GtkWidget *window, *grid, *scrolled, *view;
+	GtkWidget *window;
 
 	window = gtk_application_window_new (GTK_APPLICATION (app));
-	gtk_window_set_default_size ((GtkWindow*)window, 640, 480);
+
 	g_action_map_add_action_entries (G_ACTION_MAP (window), win_entries, G_N_ELEMENTS (win_entries), window);
-	gtk_window_set_title (GTK_WINDOW (window), "Bloatpad");
-
-	grid = gtk_grid_new ();
-	gtk_container_add (GTK_CONTAINER (window), grid);
-
-	scrolled = gtk_scrolled_window_new (NULL, NULL);
-	gtk_widget_set_hexpand (scrolled, TRUE);
-	gtk_widget_set_vexpand (scrolled, TRUE);
-	view = gtk_text_view_new ();
-
-	g_object_set_data ((GObject*)window, "bloatpad-text", view);
-
-	gtk_container_add (GTK_CONTAINER (scrolled), view);
-
-	gtk_grid_attach (GTK_GRID (grid), scrolled, 0, 1, 1, 1);
 
 	gtk_widget_show_all (GTK_WIDGET (window));
-}
-
-static void
-bloat_pad_activate (GApplication *application)
-{
-	new_window (application);
 }
 
 typedef struct
@@ -113,29 +91,18 @@ bloat_pad_class_init (BloatPadClass *class)
 	application_class->activate = bloat_pad_activate;
 }
 
-BloatPad *
-bloat_pad_new (void)
-{
-	BloatPad *bloat_pad;
-
-	g_set_application_name ("Bloatpad");
-
-	bloat_pad = g_object_new (bloat_pad_get_type (),
-		"application-id", "org.gtk.Test.bloatpad",
-		"flags", G_APPLICATION_FLAGS_NONE,
-		"register-session", TRUE,
-		NULL);
-
-	return bloat_pad;
-}
-
 int
 main (int argc, char **argv)
 {
 	BloatPad *bloat_pad;
 	int status;
 
-	bloat_pad = bloat_pad_new ();
+	g_set_application_name ("Bloatpad");
+
+	bloat_pad = g_object_new (bloat_pad_get_type (),
+		"application-id", "org.gtk.Test.bloatpad",
+		"flags", G_APPLICATION_FLAGS_NONE,
+		NULL);
 
 	status = g_application_run (G_APPLICATION (bloat_pad), argc, argv);
 
